@@ -1,5 +1,7 @@
 #!/home/jacoby/lang/bin/perl
 
+
+
 use feature qw'say' ;
 use strict ;
 use warnings ;
@@ -19,10 +21,12 @@ $dispatch->{ help } = \&help ;
 $dispatch->{ test } = \&test ;
 $dispatch->{ set }  = \&set ;
 $dispatch->{ get }  = \&get ;
-$dispatch->{ to }    = \&to ;
-$dispatch->{ from }  = \&from ;
+$dispatch->{ to }   = \&to ;
+$dispatch->{ from } = \&from ;
 
-if ( $dispatch->{ lc $config->{ argv }->[ 0 ] } ) {
+if (    defined $config->{ argv }->[ 0 ] && 
+        $dispatch->{ lc $config->{ argv }->[ 0 ] } 
+        ) {
     $dispatch->{ lc $config->{ argv }->[ 0 ] }->( $config ) ;
     }
 else {
@@ -38,22 +42,22 @@ exit ;
 sub to {
     my $config = shift ;
     my $remote = $config->{ deploy_path } ;
-    my $local = abs_path '.' ;
+    my $local  = abs_path '.' ;
     say 'Remote:    ' . $remote ;
     say 'Local:     ' . $local ;
-    rcopy( $local , $remote ) ;
-    unlink join '/' , $remote , '.git' ;
-    unlink join '/' , $remote , '.deploy' ;
+    rcopy( $local, $remote ) ;
+    unlink join '/', $remote, '.git' ;
+    unlink join '/', $remote, '.deploy' ;
     say 'Done' ;
     }
 
 sub from {
     my $config = shift ;
     my $remote = $config->{ deploy_path } ;
-    my $local = abs_path '.' ;
+    my $local  = abs_path '.' ;
     say 'Remote:    ' . $remote ;
     say 'Local:     ' . $local ;
-    rcopy( $remote , $local ) ;
+    rcopy( $remote, $local ) ;
     say 'Done' ;
     }
 
@@ -65,13 +69,13 @@ sub set {
     delete $config->{ argv } ;
     DumpFile $file , $config ;
     say 'Set' ;
-    say join "\t" , $key , defined $config->{ $key } ? $config->{ $key } : 'not set' ;
+    say join "\t", $key, defined $config->{ $key } ? $config->{ $key } : 'not set' ;
     }
 
 sub get {
     my $config = shift ;
     my $key    = $config->{ argv }->[ 1 ] ;
-    say join "\t" , $key , defined $config->{ $key } ? $config->{ $key } : 'not set' ;
+    say join "\t", $key, defined $config->{ $key } ? $config->{ $key } : 'not set' ;
     }
 
 sub test {
@@ -80,7 +84,36 @@ sub test {
     }
 
 sub help {
-    say "HELP" ;
+    say <<"END" ;
+
+deploy is a development too, intended to copy code from directories owned
+by a group user (in my case, gcore) to a directory on my local machine, and
+back. This will allow me to use tools such as git to better work on the code, 
+and protect my development from being squashed by other users.
+
+This tool uses recursive copy.
+
+USAGE:
+
+    deploy set
+        set a value in the configuration file, .deploy. Currently, 
+        the only used value is deploy_path, which is the directory 
+        the current directory is copied from and to.
+
+    deploy get
+        set a set value from the configuration file. Perhaps useful
+        to store task-specific variables.
+
+    deploy from 
+        copy files from the deploy_path directory to the local directory.
+
+    deploy to
+        copy local files to the deploy_path directory.
+
+    deploy help
+        Show this text
+
+END
     }
 
 sub config {
