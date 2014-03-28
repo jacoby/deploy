@@ -1,0 +1,68 @@
+#!/home/jacoby/lang/bin/perl
+
+use feature qw'say' ;
+use strict ;
+use warnings ;
+use utf8 ;
+
+use Data::Dumper ;
+
+use Cwd 'abs_path' ;
+use YAML qw{ DumpFile LoadFile } ;
+
+my $file = join '/', ( abs_path '.' ), '.deploy' ;
+my $config = config() ;
+
+my $dispatch ;
+$dispatch->{ help } = \&help ;
+$dispatch->{ test } = \&test ;
+$dispatch->{ set }  = \&set ;
+$dispatch->{ get }  = \&get ;
+
+if ( $dispatch->{ lc $config->{ argv }->[ 0 ] } ) {
+    $dispatch->{ lc $config->{ argv }->[ 0 ] }->( $config ) ;
+    }
+else {
+    help() ;
+    }
+
+exit ;
+
+# ======================================================================
+# Subroutines
+# ----------------------------------------------------------------------
+
+sub set {
+    my $config = shift ;
+    my $key    = $config->{ argv }->[ 1 ] ;
+    my $val    = $config->{ argv }->[ 2 ] ;
+    $config->{ $key } = $val ;
+    delete $config->{ argv } ;
+    DumpFile $file , $config ;
+    say 'Set' ;
+    say join "\t" , $key , defined $config->{ $key } ? $config->{ $key } : 'not set' ;
+    }
+
+sub get {
+    my $config = shift ;
+    my $key    = $config->{ argv }->[ 1 ] ;
+    say join "\t" , $key , defined $config->{ $key } ? $config->{ $key } : 'not set' ;
+    }
+
+sub test {
+    my $config = shift ;
+    say Dumper $config ;
+    }
+
+sub help {
+    say "HELP" ;
+    }
+
+sub config {
+    if ( !-f $file ) {
+        DumpFile $file , { deploy_path => '' } ;
+        }
+    my $config = LoadFile $file ;
+    $config->{ argv } = \@ARGV ;
+    return $config ;
+    }
